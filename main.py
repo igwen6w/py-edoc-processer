@@ -134,18 +134,22 @@ class DocumentProcessor:
         await self.init()
 
         while self.running:
+            logger.info(f"开始处理任务 - {datetime.now()}")
             try:
+                logger.info(f"获取任务 - {datetime.now()}")
                 tasks = await self.db_service.fetch_tasks(MAX_WORKERS)
                 if not tasks:
+                    logger.info(f"没有可处理的任务 - {datetime.now()}")
                     await asyncio.sleep(5)
                     continue
 
+                logger.info(f"开始处理 {len(tasks)} 个任务 - {datetime.now()}")
                 await asyncio.gather(
                     *(self.process_file(task) for task in tasks)
                 )
 
             except Exception as e:
-                logger.error(f"Error in main loop: {str(e)}")
+                logger.error(f"处理任务失败 - {datetime.now()}: {str(e)}")
                 await asyncio.sleep(5)
 
     async def shutdown(self):

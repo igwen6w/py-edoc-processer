@@ -20,7 +20,28 @@ class DatabaseService:
                     LIMIT %s
                 """
                 await cur.execute(query, (max_workers,))
-                return await cur.fetchall()
+                tasks = await cur.fetchall()
+
+                if tasks:
+                    # 立即更新这些任务的状态为处理中
+                    task_ids = [task['id'] for task in tasks]
+                    placeholders = ','.join(['%s'] * len(task_ids))
+                    update_query = f"""
+                        UPDATE ww_document_file_tasks 
+                        SET status = '处理中', 
+                            updated_at = NOW()
+                        WHERE id IN ({placeholders})
+                    """
+
+                    await cur.execute(update_query, task_ids)
+                
+                # 提交事务
+                await conn.commit()
+
+                # 打印日志
+                logger.info(f"获取到 {len(tasks)} 个任务")
+
+                return tasks
 
     # 更新任务状态
     async def update_task_status(self, task_id, status, conn=None, **kwargs):
