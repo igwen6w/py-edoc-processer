@@ -1,0 +1,26 @@
+database:
+  mysql:
+    host: mysql
+    user: root
+    password: ''
+    db: edoc
+    charset: utf8mb4
+    autocommit: False
+
+settings:
+  paths:
+    file_prefix: "/var/www/e-doc/public/"
+    temp_dir: "temp"
+    document_page: "/uploads/documents/{document_id}/pages/{page_number}_{title}.jpg"
+  
+  task:
+    max_retry: 3
+    max_workers: 5
+  
+  formats:
+    supported_images:
+      - ".jpg"
+      - ".jpeg"
+      - ".png"
+      - ".tif"
+      - ".tiff" 
