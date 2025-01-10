@@ -63,7 +63,8 @@ class DocumentProcessor:
                         page_number = int(page_number)
                         
                         # 检查页面是否已存在
-                        if not await self.db_service.check_page_exists(document_id, page_number):
+                        # if not await self.db_service.check_page_exists(document_id, page_number):
+                        if page_number:
                             target_path = DOCUMENT_PAGE_PATH.format(
                                 document_id=document_id,
                                 page_number=page_number,
