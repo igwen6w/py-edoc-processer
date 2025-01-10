@@ -28,12 +28,12 @@ def parse_directory_name(dir_name):
 
 def extract_page_number(file_name):
     """从文件名中提取页码"""
-    page_match = re.match(r'^.*?(\d+).*$', file_name)
+    page_match = re.match(r'.*_(\d+)\..*$', file_name)
     return page_match.group(1) if page_match else '0'
 
 def parse_file_name(file_name):
     """解析文件名称"""
-    match = re.match(r'(\d+)-(.+)\.[^.]+$', file_name)
+    match = re.match(r'(.+)_(\d+)\.[^.]+$', file_name)
     if match:
-        return match.group(1), match.group(2)
+        return match.group(2), match.group(1)
     return 0, file_name
