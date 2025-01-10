@@ -33,7 +33,7 @@ def extract_page_number(file_name):
 
 def parse_file_name(file_name):
     """解析文件名称"""
-    match = re.match(r'(.+)_(\d+)\.[^.]+$', file_name)
+    match = re.match(r'.*_(\d+)\..*$', file_name)
     if match:
-        return match.group(2), match.group(1)
+        return match.group(1), match.group(1)
     return 0, file_name
