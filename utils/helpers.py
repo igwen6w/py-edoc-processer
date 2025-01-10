@@ -35,5 +35,6 @@ def parse_file_name(file_name):
     """解析文件名称"""
     match = re.match(r'.*_(\d+)\..*$', file_name)
     if match:
-        return match.group(1), match.group(1)
+        page_number = int(match.group(1))
+        return page_number, match.group(1)
     return 0, file_name

@@ -144,7 +144,7 @@ class DatabaseService:
             await cur.execute("""
                 INSERT INTO ww_document_pages 
                 (title, document_id, directory_id, page_number, image_path)
-                VALUES (%s, %s, %s, %d, %s)
+                VALUES (%s, %s, %s, %s, %s)
             """, (title, document_id, directory_id, page_number, image_path))
 
         finally:
