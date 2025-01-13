@@ -11,7 +11,7 @@ settings:
   paths:
     file_prefix: "/var/www/e-doc/public/"
     temp_dir: "temp"
-    document_page: "/uploads/documents/{document_id}/pages/{page_number}_{title}.jpg"
+    document_page: "/uploads/documents/{document_id}/pages/{random_string}-{title}_{page_number}.jpg"
   
   task:
     max_retry: 3

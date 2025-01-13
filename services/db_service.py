@@ -15,7 +15,7 @@ class DatabaseService:
                     SELECT t.*, f.file_path
                     FROM ww_document_file_tasks t
                     JOIN ww_document_files f ON t.document_file_id = f.id
-                    WHERE t.status IN ('待重试', '未处理') AND t.file_type = '档案包'
+                    WHERE t.status IN ('待重试', '未处理') AND t.file_type in ('档案包', 'PDF')
                     ORDER BY FIELD(t.status, '待重试', '未处理'), t.created_at ASC
                     LIMIT %s
                 """
@@ -164,8 +164,28 @@ class DatabaseService:
                 SELECT id FROM ww_document_pages 
                 WHERE document_id = %s AND page_number = %s
             """, (document_id, page_number))
-            return bool(await cur.fetchone())
+            return await cur.fetchone()
 
+        finally:
+            await cur.close()
+            await self.pool.release(conn)
+
+    # 获取文档的最后一页号码
+    async def get_max_page(self, document_id):
+        conn = await self.pool.acquire()
+        cur = await conn.cursor()
+
+        try:
+            await cur.execute("""
+                SELECT MAX(page_number) FROM ww_document_pages
+                WHERE document_id = %s
+            """, (document_id))
+            # 获取查询结果
+            result = await cur.fetchone()
+            max_page = result[0] if result[0] is not None else 0  # 提取最大页码，如果没有结果则返回 0
+
+            return max_page
+        
         finally:
             await cur.close()
             await self.pool.release(conn)
