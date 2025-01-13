@@ -15,7 +15,7 @@ class DatabaseService:
                     SELECT t.*, f.file_path
                     FROM ww_document_file_tasks t
                     JOIN ww_document_files f ON t.document_file_id = f.id
-                    WHERE t.status IN ('待重试', '未处理')
+                    WHERE t.status IN ('待重试', '未处理') AND t.file_type = '档案包'
                     ORDER BY FIELD(t.status, '待重试', '未处理'), t.created_at ASC
                     LIMIT %s
                 """
