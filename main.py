@@ -29,9 +29,12 @@ class DocumentProcessor:
     async def process_directory_structure(self, document_id, base_dir, initial_parent_id=0, conn=None):
         """处理目录结构"""
         total_pages = 0
+        # 在开始处理前，获取当前文档的最大页码
+        max_page_number = await self.db_service.get_max_page(document_id=document_id)
+        page_number_mapping = {}  # 用于跟踪页码映射
 
         async def process_dir(dir_path, parent_id=initial_parent_id, level=0):
-            nonlocal total_pages
+            nonlocal total_pages, max_page_number
 
             try:
                 entries = sorted(os.listdir(dir_path))
@@ -40,49 +43,47 @@ class DocumentProcessor:
 
                     if os.path.isdir(full_path):
                         logger.info(f"处理目录: {full_path} at level {level}")
-                        # 处理目录
                         dir_name = os.path.basename(full_path)
-
-                        # 解析目录名称
                         number, name, start_page = parse_directory_name(dir_name)
-
-                        # 创建目录
                         dir_id = await self.db_service.insert_directory(document_id, parent_id, name, start_page, number, conn=conn)
-
-                        # 处理子目录
                         sub_pages = await process_dir(full_path, dir_id, level + 1)
                         total_pages += sub_pages
 
                     elif os.path.isfile(full_path) and ImageService.is_supported_image(full_path):
                         logger.info(f"处理图片文件: {full_path}")
-
-                        # 处理图片文件
                         file_name = os.path.basename(full_path)
+                        original_page_number, title = parse_file_name(file_name)
+                        original_page_number = int(original_page_number)
 
-                        # 解析文件名称
-                        page_number, title = parse_file_name(file_name)
-                        page_number = int(page_number)
+                        if original_page_number:
+                            # 使用映射表检查是否已经处理过这个页码
+                            if original_page_number in page_number_mapping:
+                                actual_page_number = page_number_mapping[original_page_number]
+                            else:
+                                # 检查页码是否存在
+                                if await self.db_service.check_page_exists(document_id=document_id, page_number=original_page_number):
+                                    max_page_number += 1
+                                    actual_page_number = max_page_number
+                                else:
+                                    actual_page_number = original_page_number
+                                    if actual_page_number > max_page_number:
+                                        max_page_number = actual_page_number
+                                
+                                # 保存页码映射
+                                page_number_mapping[original_page_number] = actual_page_number
 
-                        if page_number:
-                            # 生成一个随机字符串
-                            random_string = str(uuid.uuid4().hex)[:8]  # 取前8个字符作为随机字符串
+                            random_string = str(uuid.uuid4().hex)[:8]
                             target_path = DOCUMENT_PAGE_PATH.format(
-                                random_string = random_string,
+                                random_string=random_string,
                                 document_id=document_id,
-                                page_number=page_number,
+                                page_number=actual_page_number,
                                 title=title
                             )
 
-                            # 转换为jpg
                             ImageService.convert_to_jpg(full_path, target_path)
 
-                            # 检查页码是否存在，若页码已经存在将其添加到最后一页
-                            if await self.db_service.check_page_exists(document_id=document_id, page_number=page_number):
-                                page_number = await self.db_service.get_max_page(document_id=document_id) + 1
-
-                            # 插入页面
                             await self.db_service.insert_page(
-                                title, document_id, parent_id, page_number, target_path, conn=conn
+                                title, document_id, parent_id, actual_page_number, target_path, conn=conn
                             )
 
                             total_pages += 1
